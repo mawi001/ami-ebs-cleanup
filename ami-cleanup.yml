@@ -70,3 +70,4 @@
       when:
         - item.image_id not in inuse_amis
         - item.image_id in older_amis
+        - item.state != 'pending'

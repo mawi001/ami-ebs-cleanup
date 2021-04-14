@@ -1,5 +1,5 @@
 ---
-- name: Manage AWS AMI cleanup
+- name: Manage AWS AMI cleanup - Delete old and unused AMIs from AWS account
   gather_facts: false
   hosts:
     - localhost

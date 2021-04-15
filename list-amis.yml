@@ -5,7 +5,7 @@
   register: list_amis
 
 - set_fact:
-    filter_date: "{{ lookup('pipe','date \"+%Y-%m-%d\" -d \"{{ ami_filter_age }} ago\"') }}"
+    filter_date: "{{ lookup('pipe','date \"-Ins\" -d \"{{ ami_filter_age }} ago\"') }}"
 
 - set_fact:
    filtered_ami: "{{ list_amis | json_query(\"images[?creation_date<=`\" + filter_date + \"`]\") }}"

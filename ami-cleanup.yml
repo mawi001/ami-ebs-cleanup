@@ -7,7 +7,7 @@
     delete_snapshots: 'True'
     inuse_amis: []
     older_amis: []
-    ami_filter_age: '30 day' # 30 day, 24 hour
+    ami_filter_age: '2 min' # 30 day, 24 hour, 5 min
   pre_tasks:
     - name: Ensure module dependencies are present
       pip:

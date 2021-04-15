@@ -7,7 +7,7 @@
     delete_snapshots: 'True'
     inuse_snapshots: []
     older_snapshots: []
-    snapshot_filter_age: '30 day' # 30 day, 24 hour
+    snapshot_filter_age: '2 min' # 30 day, 24 hour, 5 min
     ami_filter_age: "{{ snapshot_filter_age }}"
     inuse_amis: []
     ami_snapshots: []
@@ -29,7 +29,7 @@
       register: list_ebs_snapshots
 
     - set_fact:
-        filter_date: "{{ lookup('pipe','date \"+%Y-%m-%d\" -d \"{{ snapshot_filter_age }} ago\"') }}"
+        filter_date: "{{ lookup('pipe','date \"-Ins\" -d \"{{ snapshot_filter_age }} ago\"') }}"
 
     - set_fact:
        filtered_snapshots: "{{ list_ebs_snapshots | json_query(\"snapshots[?start_time<=`\" + filter_date + \"`]\") }}"

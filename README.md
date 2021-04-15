@@ -11,6 +11,7 @@ Install using ansible-galaxy
 
 ```sh
 ansible-galaxy collection install amazon.aws
+ansible-galaxy collection install community.aws
 ```
 
 ## Usage:

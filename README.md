@@ -2,6 +2,17 @@
 
 Delete AMIs in AWS account that are older then certain age and not in-use to launch active EC2 instances.
 
+## Prerequisites
+
+
+**Ansible AWS modules**. [Gallaxy link](https://galaxy.ansible.com/amazon/aws?extIdCarryOver=true&sc_cid=701f2000001OH7YAAW)
+
+Install using ansible-galaxy
+
+```sh
+ansible-galaxy collection install amazon.aws
+```
+
 ## Usage:
 
 Run cleanup with defaults (AMIs older then 30 days) in region `us-east-1`

@@ -1,0 +1,91 @@
+---
+- name: Manage AWS EBS cleanup
+  gather_facts: false
+  hosts:
+    - localhost
+  vars:
+    delete_snapshots: 'True'
+    inuse_snapshots: []
+    older_snapshots: []
+    snapshot_filter_age: '30 day' # 30 day, 24 hour
+    ami_filter_age: "{{ snapshot_filter_age }}"
+    inuse_amis: []
+    ami_snapshots: []
+  pre_tasks:
+    - name: Ensure module dependencies are present
+      pip:
+        name:
+          - boto
+          - boto3
+  tasks:
+    - name: Get the current caller identity information
+      amazon.aws.aws_caller_info:
+      register: caller_info
+
+    - name: List snapshots in AWS account
+      amazon.aws.ec2_snapshot_info:
+        filters:
+          owner-id: "{{ caller_info.account }}"
+      register: list_ebs_snapshots
+
+    - set_fact:
+        filter_date: "{{ lookup('pipe','date \"+%Y-%m-%d\" -d \"{{ snapshot_filter_age }} ago\"') }}"
+
+    - set_fact:
+       filtered_snapshots: "{{ list_ebs_snapshots | json_query(\"snapshots[?start_time<=`\" + filter_date + \"`]\") }}"
+
+    - debug: var=filtered_snapshots
+
+    - shell: echo "{{ filtered_snapshots | length }} {{ list_ebs_snapshots.snapshots | length }}"
+
+    - debug: msg="{{ item }}"
+      with_items: "{{ list_ebs_snapshots.snapshots }}"
+
+    - name: List EBS volumes in AWS account
+      amazon.aws.ec2_vol_info:
+      register: list_ebs_volumes
+
+    - debug: var=list_ebs_volumes
+
+    - name: collect snapshots in use by EBS volumes
+      set_fact:
+        inuse_snapshots: "{{ inuse_snapshots + [ item.snapshot_id ] }}"
+      with_items: "{{ list_ebs_volumes.volumes }}"
+
+    - name: List AMIs
+      include_tasks: list-amis.yml
+
+    - set_fact:
+        ami_snapshots: "{{ item.block_device_mappings | json_query(jmesquery) }}"
+      with_items: "{{ list_amis.images }}"
+      vars:
+         jmesquery: "[*].ebs.snapshot_id"
+
+    - debug: var=ami_snapshots
+
+    - set_fact:
+        inuse_snapshots: "{{ inuse_snapshots + ami_snapshots }}"
+
+    - debug: var=inuse_snapshots
+
+    - name: collect old snapshots
+      set_fact:
+        older_snapshots: "{{ older_snapshots + [ item.snapshot_id ] }}"
+      with_items: "{{ filtered_snapshots }}"
+
+    - name: Report Delete snapshots older then age and not in use
+      debug:
+        msg: "Skip deletion of snapshot {{ item.snapshot_id }} as it is currently in-use or not older then {{ snapshot_filter_age }}"
+      with_items: "{{ list_ebs_snapshots.snapshots }}"
+      when:
+        - item.snapshot_id in inuse_snapshots
+        - item.snapshot_id not in older_snapshots
+
+    - name: Delete EBS snapshots
+      amazon.aws.ec2_snapshot:
+        snapshot_id: "{{ item.snapshot_id }}"
+        state: absent
+      with_items: "{{ list_ebs_snapshots.snapshots }}"
+      when:
+        - item.snapshot_id in older_snapshots
+        - item.snapshot_id not in inuse_snapshots

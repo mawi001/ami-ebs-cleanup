@@ -7,29 +7,20 @@
     delete_snapshots: 'True'
     inuse_amis: []
     older_amis: []
-    ami_filter_age_days: '30 day' # 30 day, 24 hour
+    ami_filter_age: '30 day' # 30 day, 24 hour
+  pre_tasks:
+    - name: Ensure module dependencies are present
+      pip:
+        name:
+          - boto
+          - boto3
   tasks:
     - name: Get the current caller identity information
       amazon.aws.aws_caller_info:
       register: caller_info
 
-    - name: List AMIs in AWS account
-      amazon.aws.ec2_ami_info:
-        owners: "{{ caller_info.account }}"
-      register: list_amis
-
-    - set_fact:
-        filter_date: "{{ lookup('pipe','date \"+%Y-%m-%d\" -d \"{{ ami_filter_age_days }} ago\"') }}"
-
-    - set_fact:
-       filtered_ami: "{{ list_amis | json_query(\"images[?creation_date<=`\" + filter_date + \"`]\") }}"
-
-    - shell: echo "{{ filtered_ami | length }} {{ list_amis.images | length }}"
-
-    - debug: var=filter_date
-
-    - debug: msg="{{ item }}"
-      with_items: "{{ list_amis.images }}"
+    - name: List AMIs
+      include_tasks: list-amis.yml
 
     - name: List EC2 instances in AWS account
       community.aws.ec2_instance_info:
@@ -55,7 +46,7 @@
 
     - name: Report Delete AMIs older then age and not in use
       debug:
-        msg: "Skip deletion of AMI {{ item.image_id }} as it is currently in-use or not older then {{ ami_filter_age_days }}"
+        msg: "Skip deletion of AMI {{ item.image_id }} as it is currently in-use or not older then {{ ami_filter_age }}"
       with_items: "{{ list_amis.images }}"
       when:
         - item.image_id in inuse_amis

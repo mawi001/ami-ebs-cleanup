@@ -2,19 +2,40 @@
 
 Delete AMIs in AWS account that are older then certain age and not in-use to launch active EC2 instances.
 
+
 ## Prerequisites
 
-
-**Ansible AWS modules**. [Gallaxy link](https://galaxy.ansible.com/amazon/aws?extIdCarryOver=true&sc_cid=701f2000001OH7YAAW)
-
-Install using ansible-galaxy
-
-```sh
-ansible-galaxy collection install amazon.aws
-ansible-galaxy collection install community.aws
-```
+The playbook requires the `~/.aws` configdir to be present on the host that will run the playbook.
+This dir contains your AWS credentials and profile config.
 
 ## Usage:
+
+### All-in-one (AIO) script
+
+See `run.sh`
+
+This script will build the docker image with all dependencies and run the cleanup of AMIs and EBS snapshot on the following regions:
+
+```sh
+#!/usr/bin/env bash
+
+docker build -t ami-ebs-cleanup:local .
+
+# run cleanup in us-east-1
+docker run -it --rm -v ~/.aws:/root/.aws -e AWS_REGION=us-east-1 ami-ebs-cleanup:local ansible-playbook -v ami-cleanup.yml
+docker run -it --rm -v ~/.aws:/root/.aws -e AWS_REGION=us-east-1 ami-ebs-cleanup:local ansible-playbook -v ebs-cleanup.yml
+
+# run cleanup in us-east-2
+docker run -it --rm -v ~/.aws:/root/.aws -e AWS_REGION=us-east-2 ami-ebs-cleanup:local ansible-playbook -v ami-cleanup.yml
+docker run -it --rm -v ~/.aws:/root/.aws -e AWS_REGION=us-east-2 ami-ebs-cleanup:local ansible-playbook -v ebs-cleanup.yml
+
+# run cleanup in us-west-1
+docker run -it --rm -v ~/.aws:/root/.aws -e AWS_REGION=us-west-1 ami-ebs-cleanup:local ansible-playbook -v ami-cleanup.yml
+docker run -it --rm -v ~/.aws:/root/.aws -e AWS_REGION=us-west-1 ami-ebs-cleanup:local ansible-playbook -v ebs-cleanup.yml
+```
+
+
+### Run playbooks manually or with default overrides
 
 Run cleanup with defaults (AMIs older then 30 days) in region `us-east-1`
 
@@ -48,4 +69,24 @@ Delete EBS snapshots older then 1 day and not in use.
 
 ```sh
 AWS_REGION=us-east-1 ansible-playbook -v ebs-cleanup.yml -e snapshot_filter_age="'1 day'"
+```
+
+
+## Development
+
+Build the docker image
+
+```sh
+docker build -t ami-ebs-cleanup:local .
+```
+
+Run the docker container
+
+```sh
+docker run -it ami-ebs-cleanup:local bash
+
+root@e40604345951:/app# ls
+Dockerfile  README.md  ami-cleanup.yml  ebs-cleanup.yml  list-amis.yml
+
+
 ```

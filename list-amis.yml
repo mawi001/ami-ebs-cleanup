@@ -9,10 +9,3 @@
 
 - set_fact:
    filtered_ami: "{{ list_amis | json_query(\"images[?creation_date<=`\" + filter_date + \"`]\") }}"
-
-- shell: echo "{{ filtered_ami | length }} {{ list_amis.images | length }}"
-
-- debug: var=filter_date
-
-- debug: msg="{{ item }}"
-  with_items: "{{ list_amis.images }}"

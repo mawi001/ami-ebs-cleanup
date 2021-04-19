@@ -7,7 +7,7 @@
     delete_snapshots: 'True'
     inuse_snapshots: []
     older_snapshots: []
-    snapshot_filter_age: '2 min' # 30 day, 24 hour, 5 min
+    snapshot_filter_age: '30 day' # 30 day, 24 hour, 5 min
     ami_filter_age: "{{ snapshot_filter_age }}"
     inuse_amis: []
     ami_snapshots: []
@@ -34,18 +34,9 @@
     - set_fact:
        filtered_snapshots: "{{ list_ebs_snapshots | json_query(\"snapshots[?start_time<=`\" + filter_date + \"`]\") }}"
 
-    - debug: var=filtered_snapshots
-
-    - shell: echo "{{ filtered_snapshots | length }} {{ list_ebs_snapshots.snapshots | length }}"
-
-    - debug: msg="{{ item }}"
-      with_items: "{{ list_ebs_snapshots.snapshots }}"
-
     - name: List EBS volumes in AWS account
       amazon.aws.ec2_vol_info:
       register: list_ebs_volumes
-
-    - debug: var=list_ebs_volumes
 
     - name: collect snapshots in use by EBS volumes
       set_fact:
@@ -61,12 +52,8 @@
       vars:
          jmesquery: "[*].ebs.snapshot_id"
 
-    - debug: var=ami_snapshots
-
     - set_fact:
         inuse_snapshots: "{{ inuse_snapshots + ami_snapshots }}"
-
-    - debug: var=inuse_snapshots
 
     - name: collect old snapshots
       set_fact:

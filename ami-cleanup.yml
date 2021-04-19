@@ -7,7 +7,7 @@
     delete_snapshots: 'True'
     inuse_amis: []
     older_amis: []
-    ami_filter_age: '2 min' # 30 day, 24 hour, 5 min
+    ami_filter_age: '30 day' # 30 day, 24 hour, 5 min
   pre_tasks:
     - name: Ensure module dependencies are present
       pip:
@@ -28,9 +28,6 @@
           instance-state-name: ["running","pending"]
       register: list_ec2_instances
 
-    - debug: msg="{{ item.image_id }}"
-      with_items: "{{ list_ec2_instances.instances }}"
-
     - name: collect AMIs in use by EC2 instances
       set_fact:
         inuse_amis: "{{ inuse_amis + [ item.image_id ] }}"
@@ -40,9 +37,6 @@
       set_fact:
         older_amis: "{{ older_amis + [ item.image_id ] }}"
       with_items: "{{ filtered_ami }}"
-
-    - debug: var=inuse_amis
-    - debug: var=older_amis
 
     - name: Report Delete AMIs older then age and not in use
       debug:

@@ -60,14 +60,6 @@
         older_snapshots: "{{ older_snapshots + [ item.snapshot_id ] }}"
       with_items: "{{ filtered_snapshots }}"
 
-    - name: Report Delete snapshots older then age and not in use
-      debug:
-        msg: "Skip deletion of snapshot {{ item.snapshot_id }} as it is currently in-use or not older then {{ snapshot_filter_age }}"
-      with_items: "{{ list_ebs_snapshots.snapshots }}"
-      when:
-        - item.snapshot_id in inuse_snapshots
-        - item.snapshot_id not in older_snapshots
-
     - name: Delete EBS snapshots
       amazon.aws.ec2_snapshot:
         snapshot_id: "{{ item.snapshot_id }}"

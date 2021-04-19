@@ -7,7 +7,7 @@
     delete_snapshots: 'True'
     inuse_snapshots: []
     older_snapshots: []
-    snapshot_filter_age: '30 day' # 30 day, 24 hour, 5 min
+    snapshot_filter_age: '90 day' # 30 day, 24 hour, 5 min
     ami_filter_age: "{{ snapshot_filter_age }}"
     inuse_amis: []
     ami_snapshots: []
